@@ -1,0 +1,58 @@
+# 2025-10-24T22:50:00.562612400
+import vitis
+
+client = vitis.create_client()
+client.set_workspace(path="LCD_display")
+
+platform = client.get_component(name="LCD_platform")
+status = platform.build()
+
+comp = client.get_component(name="LCD_app")
+comp.build()
+
+status = platform.build()
+
+comp.build()
+
+status = platform.build()
+
+status = platform.build()
+
+comp.build()
+
+status = platform.build()
+
+comp.build()
+
+status = platform.build()
+
+comp.build()
+
+status = platform.build()
+
+comp.build()
+
+status = comp.clean()
+
+status = platform.build()
+
+comp.build()
+
+status = platform.build()
+
+comp.build()
+
+status = platform.build()
+
+comp.build()
+
+status = platform.build()
+
+comp.build()
+
+status = platform.build()
+
+comp.build()
+
+vitis.dispose()
+

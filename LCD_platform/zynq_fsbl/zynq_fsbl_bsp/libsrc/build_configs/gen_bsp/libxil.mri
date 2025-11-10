@@ -1,0 +1,14 @@
+create libxil.a
+addlib /home/marti/Vitis_workspace/LCD_display/LCD_platform/zynq_fsbl/zynq_fsbl_bsp/libsrc/build_configs/gen_bsp/libsrc/xadcps/src/libxadcps.a
+addlib /home/marti/Vitis_workspace/LCD_display/LCD_platform/zynq_fsbl/zynq_fsbl_bsp/libsrc/build_configs/gen_bsp/libsrc/uartps/src/libuartps.a
+addlib /home/marti/Vitis_workspace/LCD_display/LCD_platform/zynq_fsbl/zynq_fsbl_bsp/libsrc/build_configs/gen_bsp/libsrc/spips/src/libspips.a
+addlib /home/marti/Vitis_workspace/LCD_display/LCD_platform/zynq_fsbl/zynq_fsbl_bsp/libsrc/build_configs/gen_bsp/libsrc/scuwdt/src/libscuwdt.a
+addlib /home/marti/Vitis_workspace/LCD_display/LCD_platform/zynq_fsbl/zynq_fsbl_bsp/libsrc/build_configs/gen_bsp/libsrc/scutimer/src/libscutimer.a
+addlib /home/marti/Vitis_workspace/LCD_display/LCD_platform/zynq_fsbl/zynq_fsbl_bsp/libsrc/build_configs/gen_bsp/libsrc/scugic/src/libscugic.a
+addlib /home/marti/Vitis_workspace/LCD_display/LCD_platform/zynq_fsbl/zynq_fsbl_bsp/libsrc/build_configs/gen_bsp/libsrc/qspips/src/libqspips.a
+addlib /home/marti/Vitis_workspace/LCD_display/LCD_platform/zynq_fsbl/zynq_fsbl_bsp/libsrc/build_configs/gen_bsp/libsrc/gpio/src/libgpio.a
+addlib /home/marti/Vitis_workspace/LCD_display/LCD_platform/zynq_fsbl/zynq_fsbl_bsp/libsrc/build_configs/gen_bsp/libsrc/dmaps/src/libdmaps.a
+addlib /home/marti/Vitis_workspace/LCD_display/LCD_platform/zynq_fsbl/zynq_fsbl_bsp/libsrc/build_configs/gen_bsp/libsrc/devcfg/src/libdevcfg.a
+addlib /home/marti/Vitis_workspace/LCD_display/LCD_platform/zynq_fsbl/zynq_fsbl_bsp/libsrc/build_configs/gen_bsp/libsrc/coresightps_dcc/src/libcoresightps_dcc.a
+save
+end

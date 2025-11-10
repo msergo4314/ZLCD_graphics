@@ -1,0 +1,4 @@
+{
+    "TCFAdapter.steppingGranularity": "statement",
+    "vitis.build.application –PlatformBuildDependency": "always"
+}

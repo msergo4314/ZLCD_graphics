@@ -1,0 +1,4 @@
+domain_path: /home/marti/Vitis_workspace/LCD_display/LCD_platform/zynq_fsbl/zynq_fsbl_bsp
+app_src_dir: /tools/Xilinx/2025.1/Vitis/data/embeddedsw/lib/sw_apps/zynq_fsbl
+template: zynq_fsbl
+lang: c
