@@ -1,10 +1,10 @@
-#Zynq ST7789 LCD Driver
+# Zynq ST7789 LCD Driver
 
 A lightweight, low-level graphics driver for the ST7789 TFT display, designed specifically for the Zynq-7020 based [Smart Zynq SP](http://www.hellofpga.com/index.php/2023/04/27/smart-zynq-sp/) board which features the necessary hardware directly on the board.
 
 This library exposes a simple drawing API, offers optional LVGL compatibility, and provides efficient routines for text, shapes, pixel buffers, and display control. The driver is capable of refreshing with a period of ~30 ms in the worst case scenario where the entire screen needs to be redrawn. However, since only parts of the memory that have been changed since the last update are sent in batches, refreshes that change less of the display from its current state will be faster. For example, using only the top half of the display (in portrait mode) will take roughly half the time to transfer data, and should result in >60 FPS. Even in the worst case, the display operates at ~33 FPS, which is smooth enough for even videos (though they are not supported currently, so the closest thing would be sliding an image across the screen).
 
-##Overview
+## Overview
 
 This project implements a bare-metal graphics driver for the ST7789 display controller using the Zynq Processing System (PS).
 The main focus is on:
@@ -19,10 +19,10 @@ The library handles everything from low-level SPI transactions all the way up to
 
 At its core, it wraps the ST7789 initialization and command sequences while offering an ergonomic interface for drawing pixels, shapes, images, and text using LVGL-based font arrays and LVGL-compatible image arrays. Both font and image C arrays can be generated on the fly using the online LVGL conversion tools with minimal changes due to a compatibility layer. This allows for simple and fast integration of fonts and images into the source code directly. 
 
-####NOTE
+#### NOTE
 A video showcasing the capability of the graphics library can be downloaded and viewed in the "images" folder. This showcases all the various primitive shapes, text strings of different fonts, allignments, and colours, and rendering images
 
-##File Structure
+## File Structure
 
 lvgl_compat.h          (optional LVGL glue / API alignment)
 
@@ -34,8 +34,8 @@ images.h               (example usage of how to load an image)
 
 fonts.h                (example usage of loading any fonts)
 
-##Features
-###Display Control
+## Features
+### Display Control
 
 Full ST7789 init sequence (orientation, color mode, inversion, TE line, etc.)
 
@@ -49,7 +49,7 @@ Configurable background colours
 
 The display only ever updates when the user specifies to do so
 
-###arbitrary orientation support
+### arbitrary orientation support
 
 The library supports the four logical orientations of the physical screen:
 -Portrait mode (the default)
@@ -59,7 +59,7 @@ The library supports the four logical orientations of the physical screen:
 
 This allows the user to dynamically change the orientation of the display to write strings and shapes where the origin (0,0) is placed at the top left of the selected orientation. Internally, the driver maps any non-portrait orientation pixels into the portrait orientation pixels that would produce the desired effect. This allows the driver to support all the possible orientations a user will want, but limits RAM consumption and SPI transactions by only ever using portrait mode when sending actual pixel data to the LCD. 
 
-###Drawing Primitives
+### Drawing Primitives
 
 Draw individual pixels
 
@@ -73,7 +73,7 @@ Arbitrary-region writes
 
 Colour helpers (RGB565 handling)
 
-###Text Rendering
+### Text Rendering
 
 Built-in font descriptor support for arbitrary fonts of the .ttf format
 
@@ -83,23 +83,23 @@ Wrapping support for strings
 
 Background vs. transparent text rendering
 
-###Performance-Oriented Behavior
+### Performance-Oriented Behavior
 
 updates the display by monitoring the internal RAM buffer for changes and only the rows of the buffer that have changed since the last refresh
 
 Avoids floating-point operations for some drawing algorithms
 
-###LVGL Compatibility Layer
+### LVGL Compatibility Layer
 
 lvgl_compat.h provides thin wrappers so you can connect this driver to LVGL as a display backend
 
 this is most useful for displaying any image and using any font with the LVGL online tools that can convert .ttf fonts and any image into C style arrays to be directly inserted into header files (see images.h and fonts.h)
 
-###Implementation Details
+### Implementation Details
 
 This section breaks down the driver internals so future you (or someone else) can confidently extend it.
 
-###Initialization Flow
+### Initialization Flow
 
 The implementation sends the required command list to the ST7789, including:
 
@@ -125,7 +125,7 @@ RES (reset)
 
 BL (backlight, not yet supported and always at full brightness now)
 
-###Address Window Management
+### Address Window Management
 
 Before writing pixel data, the driver issues:
 
@@ -137,7 +137,7 @@ RAMWR (start write command)
 
 The most recent row and column ranges are cached to slightly reduce the SPI transactions if the user redraws over the same space continuously.
 
-###Shape Rendering Implementation
+### Shape Rendering Implementation
 Rectangles
 
 Uses nested loops writing RGB565 directly
@@ -158,7 +158,7 @@ Horizontal/vertical lines special-cased for speed
 
 Arbitrary slopes use Bresenham's line algorithm
 
-###Text Rendering Implementation
+### Text Rendering Implementation
 
 Text is drawn using font descriptors included in the project.
 Each glyph includes:
@@ -190,7 +190,7 @@ vertical centering offsets based on font metadata
 
 the library also supports aligning your text to the left, center, and right sides of the screen instead of numerical pixel offsets.
 
-###Printf-like functionality
+### Printf-like functionality
 
 implements a printf-like function called ZLCD_printf() which simply prints formatted strings to the LCD display in a manner similar to printf()
 
@@ -200,7 +200,7 @@ The function overwrites printed strings by default, but can be configured to mov
 
 This allows users to print strings visually without having to use the serial terminal or worrying about exact alignment, the font used, or the colour of the text drawn, which can be useful for debugging or monitoring values
 
-###Future Extensions (Suggested)
+### Future Extensions (Suggested)
 
 DMA-accelerated SPI transfers (could reduce refresh times)
 
