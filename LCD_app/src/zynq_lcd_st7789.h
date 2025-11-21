@@ -324,7 +324,8 @@ ZLCD_RETURN_STATUS ZLCD_set_printf_mode(ZLCD_PRINTF_MODE mode);
 ZLCD_RETURN_STATUS ZLCD_set_printf_cursor(ZLCD_pixel_coordinate coord);
 ZLCD_RETURN_STATUS ZLCD_set_printf_cursor_xy(uint16_t cursor_x, uint16_t cursor_y);
 ZLCD_PRINTF_MODE ZLCD_get_printf_mode();
-
+// print to both stdout and the LCD
+void print_output(const char *fmt, ...);
 
 // font used by ZLCD_printf() should always be included - uses ~1.6 Kb of RAM
 

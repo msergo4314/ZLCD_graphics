@@ -2470,3 +2470,15 @@ ZLCD_RETURN_STATUS ZLCD_set_printf_cursor_xy(uint16_t cursor_x,
   printf_y = cursor_y;
   return ZLCD_SUCCESS;
 }
+
+void print_output(const char *fmt, ...) {
+  va_list args;
+  char buffer[256];
+
+  va_start(args, fmt);
+  vsnprintf(buffer, sizeof(buffer), fmt, args);
+  va_end(args);
+
+  printf("%s", buffer);      // Print to UART
+  ZLCD_printf("%s", buffer); // Print to LCD
+}

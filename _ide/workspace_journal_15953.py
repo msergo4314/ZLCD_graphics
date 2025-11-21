@@ -1,4 +1,4 @@
-# 2025-11-21T18:21:01.349653
+# 2025-11-14T13:40:46.113119
 import vitis
 
 client = vitis.create_client()
@@ -9,4 +9,6 @@ status = platform.build()
 
 comp = client.get_component(name="LCD_app")
 comp.build()
+
+vitis.dispose()
 
