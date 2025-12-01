@@ -91,6 +91,8 @@ Steps for displaying any image on the LCD:
     that will not be fully visible and will need to be vertically
     or horizontally offset manually. Use:
     https://www.imageresizer.work/resize-image-in-pixel
+    or:
+    https://image.online-convert.com/convert-to-bmp for BMP images
 
 2 - Use the LVGL converter to convert the image to C array which can
     be copied into a header directly. This will convert any compatible
@@ -121,6 +123,7 @@ from 0-63 instead of 0-31
 Bit index:  15         11 10          5 4         0
             [ R R R R R ][ G G G G G G ][ B B B B B ]
 */
+
 typedef uint16_t rgb565;
 #define RGB565(r, g, b) ((((r)&0x1F) << 11) | (((g)&0x3F) << 5) | ((b)&0x1F))
 
@@ -171,6 +174,9 @@ ZLCD_RETURN_STATUS ZLCD_set_pixel_xy(uint16_t x, uint16_t y, rgb565 colour,
                                      bool update_now);
 ZLCD_RETURN_STATUS ZLCD_set_orientation(ZLCD_ORIENTATION desired_orientation);
 void ZLCD_set_background_colour(rgb565 background_colour);
+/*
+draws the background in RAM but does not send the pixel data to the LCD
+*/
 ZLCD_RETURN_STATUS ZLCD_clear(void);
 ZLCD_RETURN_STATUS ZLCD_refresh_display(void);
 ZLCD_RETURN_STATUS
@@ -315,6 +321,9 @@ ZLCD_RETURN_STATUS ZLCD_print_wrapped_string_on_background_xy(
     const ZLCD_font *f, bool update_now);
 
 ZLCD_RETURN_STATUS ZLCD_sleep(void);
+/*
+draws the background and clears the screen right away
+*/
 ZLCD_RETURN_STATUS ZLCD_draw_background(void);
 ZLCD_RETURN_STATUS ZLCD_sleep_wake(void);
 ZLCD_RETURN_STATUS ZLCD_display_on(void);
@@ -323,9 +332,14 @@ ZLCD_RETURN_STATUS ZLCD_printf(const char *format, ...);
 ZLCD_RETURN_STATUS ZLCD_set_printf_mode(ZLCD_PRINTF_MODE mode);
 ZLCD_RETURN_STATUS ZLCD_set_printf_cursor(ZLCD_pixel_coordinate coord);
 ZLCD_RETURN_STATUS ZLCD_set_printf_cursor_xy(uint16_t cursor_x, uint16_t cursor_y);
-ZLCD_PRINTF_MODE ZLCD_get_printf_mode();
+ZLCD_PRINTF_MODE ZLCD_get_printf_mode(void);
 // print to both stdout and the LCD
 void print_output(const char *fmt, ...);
+
+/*
+read a BMP file and return a ZLCD_image with the relevant data
+*/
+ZLCD_image ZLCD_read_BMP(const u8 *BMP_data, size_t BMP_data_length, u8 *map_destination_arr, size_t map_destination_size);
 
 // font used by ZLCD_printf() should always be included - uses ~1.6 Kb of RAM
 

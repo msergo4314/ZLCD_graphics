@@ -56,6 +56,31 @@ typedef struct {
   int16_t y;
 } ZLCD_internal_coordinate;
 
+/*
+Bitmap header located at the start of any BMP file
+*/
+#pragma pack(push, 1) // ensure fully packed
+typedef struct {
+  uint16_t signature;    // 'BM'
+  uint32_t file_size;    // full file size including headers
+  uint32_t reserved;     // unused
+  uint32_t pixel_offset; // offset to start of px data
+  // end of Bitmap file header
+  // start of Bitmap info header
+  uint32_t dib_header_size;  // must be 40
+  int32_t width;             // in px
+  int32_t height;            // in px
+  uint16_t planes;           // must be 1
+  uint16_t bits_per_pixel;   // 1,4,8,16,24,32
+  uint32_t compression;      // should be 0
+  uint32_t img_size;         // ignore if compresion is 0
+  int32_t x_ppm;             // pixels/meter
+  int32_t y_ppm;             // pixels/meter
+  uint32_t colors_used;      // number of actually used colours
+  uint32_t important_colors; // number of important colours, 0 for all
+} BMPHeader;
+#pragma pack(pop)
+
 /*******************************
   STATIC GLOBAL VARIABLES HERE
 ********************************/
@@ -199,12 +224,13 @@ static uint16_t get_font_height(const char *string, const ZLCD_font *f,
 ********************************/
 
 ZLCD_pixel_coordinate ZLCD_create_coordinate(uint16_t x, uint16_t y) {
-  return (ZLCD_pixel_coordinate) {.x=x, .y=y};
+  return (ZLCD_pixel_coordinate){.x = x, .y = y};
 }
 
 void ZLCD_change_pixel_coordinate(ZLCD_pixel_coordinate *coordinate,
                                   uint16_t new_x, uint16_t new_y) {
-  if (coordinate == NULL) return;
+  if (coordinate == NULL)
+    return;
   coordinate->x = new_x;
   coordinate->y = new_y;
 }
@@ -2065,6 +2091,7 @@ ZLCD_RETURN_STATUS ZLCD_draw_image(ZLCD_pixel_coordinate image_origin,
     }
     break;
   default:
+    printf("ERROR: invalid orientation type detected\n");
     break;
   }
   if (update_now) {
@@ -2275,9 +2302,7 @@ ZLCD_RETURN_STATUS ZLCD_printf(const char *format, ...) {
   if (printf_y >= current_orientation.vertical_axis_length_px) {
     printf_y = printf_font.font_size;
   }
-  if (current_printf_mode == ZLCD_PRINTF_MODE_OVERWRITE) {
-    printf_x = 0;
-  }
+  uint16_t starting_x_value = printf_x;
 
   va_list args;
   va_start(args, format);
@@ -2372,7 +2397,7 @@ ZLCD_RETURN_STATUS ZLCD_printf(const char *format, ...) {
   printf_x = cursor_x >> 4;
   printf_y = cursor_y;
   if (current_printf_mode == ZLCD_PRINTF_MODE_OVERWRITE) {
-    printf_x = 0;
+    printf_x = starting_x_value;
     printf_y = starting_y_value;
   }
   return ZLCD_refresh_display();
@@ -2434,7 +2459,7 @@ ZLCD_RETURN_STATUS ZLCD_set_printf_mode(ZLCD_PRINTF_MODE mode) {
   return ZLCD_SUCCESS;
 }
 
-ZLCD_PRINTF_MODE ZLCD_get_printf_mode() {
+ZLCD_PRINTF_MODE ZLCD_get_printf_mode(void) {
   if (!ZLCD_initialized) {
     printf("Initialize the LCD before calling other ZLCD functions\n");
     return ZLCD_PRINTF_MODE_UNKNOWN;
@@ -2471,7 +2496,185 @@ ZLCD_RETURN_STATUS ZLCD_set_printf_cursor_xy(uint16_t cursor_x,
   return ZLCD_SUCCESS;
 }
 
+ZLCD_image ZLCD_read_BMP(const uint8_t *BMP_data, size_t BMP_data_length,
+                         uint8_t *map_destination_arr,
+                         size_t map_destination_size) {
+  ZLCD_image image_to_return = {0};
+  if (BMP_data == NULL || map_destination_arr == NULL) {
+    printf("Passed NULL array into ZLCD_read_BMP() function\n");
+    return image_to_return;
+  }
+  if (!ZLCD_initialized) {
+    printf("Initialize the LCD before calling other ZLCD functions\n");
+    return image_to_return;
+  }
+  if (BMP_data_length <= sizeof(BMPHeader)) {
+    return image_to_return;
+  }
+  const BMPHeader *header = (const BMPHeader *)BMP_data;
+
+  // printf("Header signature: %x\n", header->signature);
+  // printf("Header file size: %lu\n", (long unsigned int)header->file_size);
+  // printf("Header image size: %lu\n", (long unsigned int)header->img_size);
+  // printf("Header pixel array offset: %lu\n",
+  //        (long unsigned int)header->pixel_offset);
+  // printf("Header DIB header size (>= 40): %02lu\n",
+  //        (long unsigned int)header->dib_header_size);
+  // printf("Header Width: %lu\n", (long unsigned int)header->width);
+  // printf("Header Height: %d\n", (int)header->height);
+  // printf("Header planes (should be 1): %hu\n", header->planes);
+  // printf("Header bits per pixel: %02hu\n", header->bits_per_pixel);
+  // printf("Header compression (should be 0): %lu\n",
+  //        (long unsigned int)header->compression);
+  // printf("Header colours used: %lu\n", (long unsigned
+  // int)header->colors_used); printf("Header important colours: %lu\n",
+  //        (long unsigned int)header->important_colors);
+
+  if (strncmp("BM", (const char *)&(header->signature), 2) != 0) {
+    printf("File is not a BMP file\n");
+    return image_to_return;
+  }
+  if (header->dib_header_size != 40) {
+    return image_to_return;
+  }
+  if (header->compression != 0) {
+    printf("Compression is a non-zero value -- this BMP cannot be displated\n");
+    return image_to_return;
+  }
+  size_t img_map_size = sizeof(rgb565) * header->width * header->height;
+  printf("image map size: %lu\nmap destination size: %lu\n",
+         (unsigned long int)img_map_size,
+         (unsigned long int)map_destination_size);
+  // check to make sure size of BMP is <= map_destination_size
+  if (img_map_size > map_destination_size) {
+    printf("Warning: image map size exceeds destination size\n");
+    return image_to_return;
+  }
+  uint32_t bits_per_pixel = header->bits_per_pixel;
+  if (bits_per_pixel != 1 && bits_per_pixel != 16 && bits_per_pixel != 24 &&
+      bits_per_pixel != 32) {
+    printf("Only 1/16/24/32-bit BMP supported.\n");
+    return image_to_return;
+  }
+
+  uint32_t width = header->width;
+  int32_t height = header->height;
+  switch (bits_per_pixel) {
+  case 1:
+  case 16:
+  case 24:
+  case 32:
+    // valid options
+    break;
+  default:
+    printf("Invalid number of bits per pixel detected (%d)\n",
+           (int)bits_per_pixel);
+    return image_to_return;
+  }
+
+  const uint8_t *pixel_data = BMP_data + header->pixel_offset;
+
+  uint16_t row_bytes_unpadded; // number of unpadded bytes
+  uint16_t row_bytes_padded;   // number of unpadded + padded bytes
+
+  // monochrome images
+  if (bits_per_pixel == 1) {
+
+    row_bytes_unpadded = (width + 7) / 8;
+    row_bytes_padded = 4 * ((row_bytes_unpadded + 3) / 4); // full length
+
+    const uint8_t *colour_table =
+        (uint8_t *)(BMP_data + 14 + header->dib_header_size);
+    // colour table is always 4 * num_colours bytes long
+    rgb565 colour_pallete[2];
+
+    uint8_t r, g, b;
+    b = colour_table[0];
+    g = colour_table[1];
+    r = colour_table[2];
+    colour_pallete[0] = RGB565(r, g, b);
+    // skip byte 4 (stuff byte)
+
+    b = colour_table[4];
+    g = colour_table[5];
+    r = colour_table[6];
+
+    // skip byte 8 (stuff byte)
+    colour_pallete[1] = RGB565(r, g, b);
+
+    uint32_t abs_height = height > 0 ? height : -height;
+    for (uint32_t row = 0; row < abs_height; row++) {
+
+      const uint8_t *bmp_row;
+      if (height > 0)
+        bmp_row = pixel_data + (height - 1 - row) * row_bytes_padded;
+      else
+        bmp_row = pixel_data + row * row_bytes_padded;
+
+      rgb565 *out_row =
+          (rgb565 *)(map_destination_arr + (row * width * sizeof(rgb565)));
+
+      for (uint32_t x = 0; x < width; x++) {
+        uint32_t byte_index = x / 8;
+        uint8_t bit_index = 7 - (x % 8);
+
+        uint8_t bit = (bmp_row[byte_index] >> bit_index) & 0x1;
+        out_row[x] = colour_pallete[bit];
+      }
+    }
+  }
+  // RGB565
+  else if (bits_per_pixel == 16) {
+
+  }
+  // RGB
+  else if (bits_per_pixel == 24) {
+    row_bytes_unpadded = 3 * width;
+    row_bytes_padded = row_bytes_unpadded;
+    while (row_bytes_padded % 4 != 0)
+      row_bytes_padded++;
+
+    typedef struct {
+      uint8_t b;
+      uint8_t g;
+      uint8_t r;
+    } BGR_block;
+
+    uint32_t abs_height = height > 0 ? height : -height;
+    for (uint32_t row = 0; row < abs_height; row++) {
+
+      const uint8_t *bmp_row;
+      if (height > 0)
+        bmp_row = pixel_data + (height - 1 - row) * row_bytes_padded;
+      else
+        bmp_row = pixel_data + row * row_bytes_padded;
+
+      rgb565 *out_row =
+          (rgb565 *)(map_destination_arr + (row * width * sizeof(rgb565)));
+
+      for (uint32_t x = 0; x < width; x++) {
+        BGR_block *block = (BGR_block *)&bmp_row[3 * x];
+        rgb565 colour = RGB565(block->r, block->g, block->b);
+        out_row[x] = colour;
+      }
+    }
+  }
+  // RGBA
+  else {
+  }
+  // set map to user provided array start point
+  image_to_return.map = map_destination_arr;
+  image_to_return.data_size = img_map_size;
+  image_to_return.width = width;
+  image_to_return.height = height ? height : -height;
+  return image_to_return;
+}
+
 void print_output(const char *fmt, ...) {
+  if (!ZLCD_initialized) {
+    printf("Initialize the LCD before calling other ZLCD functions\n");
+    return;
+  }
   va_list args;
   char buffer[256];
 
